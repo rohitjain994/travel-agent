@@ -70,19 +70,28 @@ Provide validation feedback and suggest improvements."""
 Original User Query:
 {user_query}
 
-Please:
-1. Check for completeness - is all necessary information included?
-2. Validate dates, times, and locations for consistency
-3. Check if budget estimates are realistic
-4. Verify logical flow and feasibility
-5. Identify any missing critical information
-6. Suggest improvements or refinements
+Please provide a comprehensive validation that ALWAYS includes:
 
-Provide your validation feedback with:
-- Validation status (valid/needs refinement)
-- Issues found (if any)
-- Suggestions for improvement
-- Overall assessment"""
+1. **Validation Status**: Overall assessment (excellent/good/needs improvement)
+2. **Issues Found**: Any problems, inconsistencies, or missing information
+3. **Suggestions for Improvement**: Specific ways to enhance the plan
+4. **Next Steps for Improvement** (REQUIRED - always include this section):
+   - What additional details or information would make this plan more promising?
+   - What specific actions should the user take to improve the plan?
+   - What questions should be answered to refine the itinerary?
+   - What research or decisions are still needed?
+   - How can the budget be optimized?
+   - What alternatives or backup plans should be considered?
+   - What cultural or local insights would enhance the experience?
+
+IMPORTANT: Always provide actionable, specific next steps even if the plan is already good. Focus on:
+- Missing information that would make the plan better
+- Specific improvements that could be made
+- Questions that need answers
+- Research that could enhance the plan
+- Details that would make execution smoother
+
+Format your response with clear sections, especially highlighting the "Next Steps for Improvement" section."""
         
         validation = self._call_llm(prompt)
         

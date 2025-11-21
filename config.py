@@ -16,3 +16,9 @@ TEMPERATURE = 0.7
 MAX_ITERATIONS = 10
 VERBOSE = True
 
+# Rate limiting configuration
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2  # seconds
+MAX_RETRY_DELAY = 60  # seconds
+RETRY_BACKOFF_MULTIPLIER = 2
+

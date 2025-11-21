@@ -10,6 +10,11 @@ An intelligent, multi-agent travel planning system powered by Gemini LLM and orc
 - 💬 **Streamlit UI**: Interactive chat interface for travel planning
 - 📋 **Comprehensive Planning**: Creates detailed itineraries with research and validation
 - 📊 **Operation Logging**: Real-time logging and monitoring of all agent operations
+- 🔐 **User Authentication**: Secure login/signup system with SQLite database
+- 💾 **Chat History Persistence**: All conversations saved and retrievable per user
+- 📚 **Conversation Management**: Navigate through top 10 previous conversations
+- 🔄 **Error Handling**: Automatic retry with exponential backoff for rate limits (429 errors)
+- 🛡️ **Password Security**: PBKDF2 hashing with salt for secure password storage
 
 ## Architecture
 
@@ -21,6 +26,12 @@ The system uses a multi-agent architecture orchestrated by LangGraph, with each 
 graph TB
     subgraph "User Interface Layer"
         UI[Streamlit UI<br/>app.py]
+        LOGIN[Login/Signup Pages<br/>pages/login.py, signup.py]
+    end
+    
+    subgraph "Authentication Layer"
+        AUTH[Auth Manager<br/>auth.py]
+        DB_AUTH[(SQLite Database<br/>travel_agent.db)]
     end
     
     subgraph "Orchestration Layer"
@@ -36,7 +47,7 @@ graph TB
     end
     
     subgraph "Base Infrastructure"
-        BASE[Base Agent<br/>LLM Integration]
+        BASE[Base Agent<br/>LLM Integration<br/>Retry Logic]
         CONFIG[Configuration<br/>config.py]
     end
     
@@ -44,9 +55,19 @@ graph TB
         LLM[Google Gemini LLM<br/>gemini-2.0-flash-lite]
     end
     
+    subgraph "Data Persistence"
+        CHAT_DB[(Chat History<br/>Conversations)]
+        USER_DB[(User Data<br/>Authentication)]
+    end
+    
     subgraph "Logging & Monitoring"
         LOGGER[Travel Agent Logger<br/>logger_config.py]
     end
+    
+    UI -->|Requires Auth| AUTH
+    LOGIN -->|Authenticate| AUTH
+    AUTH -->|Store/Verify| DB_AUTH
+    AUTH -->|User Session| UI
     
     UI -->|User Query| ORCH
     ORCH -->|State| STATE
@@ -60,19 +81,26 @@ graph TB
     EXEC -->|Inherits| BASE
     VALID -->|Inherits| BASE
     
-    BASE -->|API Calls| LLM
+    BASE -->|API Calls<br/>with Retry| LLM
     BASE -->|Uses| CONFIG
+    
+    UI -->|Save Messages| CHAT_DB
+    UI -->|Load History| CHAT_DB
+    AUTH -->|User Data| USER_DB
     
     PLAN -->|Logs| LOGGER
     RESEARCH -->|Logs| LOGGER
     EXEC -->|Logs| LOGGER
     VALID -->|Logs| LOGGER
     ORCH -->|Logs| LOGGER
+    BASE -->|Logs Retries| LOGGER
     
     ORCH -->|Results| UI
     LOGGER -->|Display Logs| UI
     
     style UI fill:#e1f5ff
+    style LOGIN fill:#e1f5ff
+    style AUTH fill:#fff9c4
     style ORCH fill:#fff4e1
     style PLAN fill:#e8f5e9
     style RESEARCH fill:#e8f5e9
@@ -80,6 +108,10 @@ graph TB
     style VALID fill:#e8f5e9
     style LLM fill:#fce4ec
     style LOGGER fill:#f3e5f5
+    style DB_AUTH fill:#e3f2fd
+    style CHAT_DB fill:#e3f2fd
+    style USER_DB fill:#e3f2fd
+    style BASE fill:#f1f8e9
 ```
 
 ### Workflow Diagram
@@ -199,24 +231,74 @@ flowchart TD
     style ValidLLM fill:#fce4ec
 ```
 
-#### Agent Execution Flow
+#### Agent Execution Flow with Error Handling
 
 ```mermaid
-graph LR
+graph TD
     subgraph "Agent Execution Pattern"
         A[Agent Receives State] --> B[Log: Execution Started]
         B --> C[Prepare Prompt<br/>with Context]
         C --> D[Call Gemini LLM API]
-        D --> E[Process LLM Response]
-        E --> F[Log: LLM Call<br/>Duration & Size]
-        F --> G[Process Results]
-        G --> H[Log: Execution Completed]
-        H --> I[Return Results to Orchestrator]
+        D --> E{Success?}
+        E -->|Yes| F[Process LLM Response]
+        E -->|429/503/500| G[Exponential Backoff<br/>Wait & Retry]
+        G --> H{Retries<br/>Exhausted?}
+        H -->|No| D
+        H -->|Yes| I[Raise RateLimitError]
+        E -->|Other Error| I
+        F --> J[Log: LLM Call<br/>Duration & Size]
+        J --> K[Process Results]
+        K --> L[Log: Execution Completed]
+        L --> M[Return Results to Orchestrator]
+        I --> N[User-Friendly Error Message]
     end
     
     style A fill:#e1f5ff
     style D fill:#fce4ec
-    style I fill:#c8e6c9
+    style G fill:#fff9c4
+    style M fill:#c8e6c9
+    style I fill:#ffcdd2
+    style N fill:#ffcdd2
+```
+
+#### Authentication & Data Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Streamlit UI
+    participant Auth as Auth Manager
+    participant DB as SQLite Database
+    participant Chat as Chat History
+
+    User->>UI: Access App
+    UI->>Auth: Check Authentication
+    Auth->>DB: Verify Session
+    
+    alt Not Authenticated
+        UI->>User: Show Login/Signup
+        User->>UI: Enter Credentials
+        UI->>Auth: Login/Signup
+        Auth->>DB: Verify/Create User
+        DB-->>Auth: User Data
+        Auth-->>UI: Set Session
+    end
+    
+    User->>UI: Send Message
+    UI->>Chat: Save Message
+    Chat->>DB: Store in chat_history
+    
+    User->>UI: Request Previous Chats
+    UI->>Chat: Get Conversations
+    Chat->>DB: Query conversations table
+    DB-->>Chat: Top 10 Conversations
+    Chat-->>UI: Display in Sidebar
+    
+    User->>UI: Select Conversation
+    UI->>Chat: Load Messages
+    Chat->>DB: Query chat_history
+    DB-->>Chat: Messages
+    Chat-->>UI: Display Conversation
 ```
 
 ### Agent Responsibilities
@@ -279,14 +361,33 @@ The application will open in your browser at `http://localhost:8501`.
 
 ## Usage
 
-1. Open the Streamlit app
-2. Enter your travel query in the chat input (e.g., "Plan a 5-day trip to Paris in March")
-3. The system will:
-   - Create a detailed travel plan
-   - Research flights, hotels, and activities
-   - Generate a final itinerary
-   - Validate the plan
-4. Review the results in the chat interface
+1. **Sign Up / Login**
+   - First-time users: Click "Sign Up" to create an account
+   - Existing users: Click "Login" to access your account
+   - All user data is securely stored in SQLite database
+
+2. **Start Planning**
+   - Enter your travel query in the chat input (e.g., "Plan a 5-day trip to Paris in March")
+   - The system will:
+     - Create a detailed travel plan
+     - Research flights, hotels, and activities
+     - Generate a final itinerary
+     - Validate the plan
+
+3. **Review Results**
+   - View results in expandable sections
+   - Check operation logs in the sidebar
+   - All conversations are automatically saved
+
+4. **Navigate Previous Chats**
+   - View top 10 previous conversations in the sidebar
+   - Click any conversation to load and continue
+   - Start new conversations with the "➕ New Conversation" button
+
+5. **Error Handling**
+   - System automatically retries on rate limit errors (429)
+   - Exponential backoff prevents API overload
+   - User-friendly error messages guide you
 
 ## Example Queries
 
@@ -300,26 +401,107 @@ The application will open in your browser at `http://localhost:8501`.
 travel-agent-1/
 ├── agents/
 │   ├── __init__.py
-│   ├── base_agent.py
-│   ├── planner_agent.py
-│   ├── researcher_agent.py
-│   ├── executor_agent.py
-│   └── validator_agent.py
-├── orchestrator.py
-├── app.py
-├── config.py
-├── requirements.txt
-├── .env.example
-└── README.md
+│   ├── base_agent.py          # Base agent with retry logic
+│   ├── planner_agent.py       # Travel planning agent
+│   ├── researcher_agent.py    # Research agent
+│   ├── executor_agent.py     # Execution agent
+│   └── validator_agent.py    # Validation agent
+├── pages/
+│   ├── login.py              # Login page
+│   └── signup.py            # Signup page
+├── orchestrator.py           # LangGraph workflow orchestrator
+├── app.py                    # Main Streamlit application
+├── auth.py                   # Authentication manager
+├── database.py              # SQLite database operations
+├── logger_config.py         # Logging configuration
+├── config.py                # Application configuration
+├── requirements.txt         # Python dependencies
+├── .env.example            # Environment variables template
+├── .gitignore              # Git ignore rules
+├── travel_agent.db         # SQLite database (auto-created)
+└── README.md               # This file
+```
+
+## Database Schema
+
+The application uses SQLite with the following tables:
+
+### Users Table
+- `id`: Primary key
+- `username`: Unique username
+- `email`: Unique email address
+- `password_hash`: Securely hashed password (PBKDF2)
+- `full_name`: User's full name
+- `created_at`: Account creation timestamp
+- `last_login`: Last login timestamp
+- `is_active`: Account status
+
+### Chat History Table
+- `id`: Primary key
+- `user_id`: Foreign key to users
+- `role`: Message role (user/assistant)
+- `content`: Message content
+- `created_at`: Message timestamp
+- `session_id`: Optional session identifier
+- `conversation_id`: Conversation grouping identifier
+
+### Conversations Table
+- `id`: Primary key
+- `user_id`: Foreign key to users
+- `conversation_id`: Unique conversation identifier
+- `title`: Conversation title (first 50 chars)
+- `first_message`: First message preview
+- `created_at`: Conversation start time
+- `updated_at`: Last message time
+- `message_count`: Total messages in conversation
+
+## Error Handling
+
+### Rate Limiting (429 Errors)
+- **Automatic Retry**: Up to 3 retries with exponential backoff
+- **Backoff Strategy**: 2s → 4s → 8s (with jitter)
+- **User Feedback**: Clear error messages with suggestions
+- **Logging**: All retry attempts are logged
+
+### Retryable Errors
+- 429 (Resource Exhausted)
+- 503 (Service Unavailable)
+- 500 (Internal Server Error)
+- Timeout errors
+
+### Configuration
+```python
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2  # seconds
+MAX_RETRY_DELAY = 60      # seconds
+RETRY_BACKOFF_MULTIPLIER = 2
 ```
 
 ## Technologies
 
-- **Streamlit**: UI framework
-- **LangGraph**: Workflow orchestration
+- **Streamlit**: UI framework for interactive web applications
+- **LangGraph**: Workflow orchestration for multi-agent systems
 - **LangChain**: LLM integration framework
-- **Google Gemini**: Large language model
-- **Python**: Core language
+- **Google Gemini**: Large language model (gemini-2.0-flash-lite)
+- **SQLite**: Lightweight database for user data and chat history
+- **Python**: Core programming language
+- **PBKDF2**: Password hashing algorithm for security
+
+## Security Features
+
+- **Password Hashing**: PBKDF2 with SHA-256, 100,000 iterations
+- **Salt**: Unique salt per password
+- **SQL Injection Protection**: Parameterized queries
+- **Session Management**: Secure session state handling
+- **Input Validation**: Username, email, and password validation
+
+## Performance Features
+
+- **Database Indexing**: Optimized queries with indexes
+- **Conversation Caching**: Fast retrieval of chat history
+- **Retry Logic**: Automatic handling of transient errors
+- **Exponential Backoff**: Prevents API overload
+- **Efficient State Management**: LangGraph state optimization
 
 ## License
 

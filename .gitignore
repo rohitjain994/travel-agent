@@ -85,6 +85,7 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+travel_agent.db
 
 # Temporary files
 *.tmp

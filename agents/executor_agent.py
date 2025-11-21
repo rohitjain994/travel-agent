@@ -69,7 +69,19 @@ Create a comprehensive final travel itinerary that includes:
 7. Emergency contacts and useful information
 8. Alternative options in case of changes
 
-Make this a complete, ready-to-use travel guide."""
+9. **Next Steps for Enhancement** (REQUIRED - always include this section):
+   - What additional information or details would make this plan more promising?
+   - What specific improvements or refinements could be made?
+   - What questions should be answered to further customize the itinerary?
+   - What additional research or decisions are needed?
+   - How can the user personalize this plan further?
+   - What local insights or cultural tips would enhance the experience?
+   - What backup plans or alternatives should be considered?
+   - What budget optimizations or cost-saving opportunities exist?
+
+IMPORTANT: Always end with a clear "Next Steps for Enhancement" section that provides actionable guidance on how to make this plan even better, even if the current plan is already comprehensive.
+
+Make this a complete, ready-to-use travel guide with clear next steps for improvement."""
         
         final_itinerary = self._call_llm(prompt)
         
