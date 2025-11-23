@@ -1,4 +1,4 @@
-# Travel Agent Chatbot
+# Travel Buddy
 
 An intelligent, multi-agent travel planning system powered by Gemini LLM and orchestrated with LangGraph.
 
@@ -15,6 +15,8 @@ An intelligent, multi-agent travel planning system powered by Gemini LLM and orc
 - 📚 **Conversation Management**: Navigate through top 10 previous conversations
 - 🔄 **Error Handling**: Automatic retry with exponential backoff for rate limits (429 errors)
 - 🛡️ **Password Security**: PBKDF2 hashing with salt for secure password storage
+- 📥 **PDF Export**: Download travel plans as well-formatted PDF documents
+- 🚀 **Next Steps Guidance**: Always includes actionable next steps for plan improvement
 
 ## Architecture
 
@@ -384,10 +386,22 @@ The application will open in your browser at `http://localhost:8501`.
    - Click any conversation to load and continue
    - Start new conversations with the "➕ New Conversation" button
 
-5. **Error Handling**
+5. **Download PDFs**
+   - Click "📥 Download as PDF" in any assistant response
+   - Get professionally formatted PDF with all travel plan details
+   - PDFs include: Travel Plan, Research Results, Final Itinerary, Validation, and Next Steps
+   - Perfect for offline access or sharing
+
+6. **Error Handling**
    - System automatically retries on rate limit errors (429)
    - Exponential backoff prevents API overload
    - User-friendly error messages guide you
+
+7. **Next Steps for Improvement**
+   - Every response includes actionable next steps
+   - Suggestions for making plans more promising
+   - Guidance on additional information needed
+   - Recommendations for plan enhancement
 
 ## Example Queries
 
@@ -399,27 +413,47 @@ The application will open in your browser at `http://localhost:8501`.
 
 ```
 travel-agent-1/
-├── agents/
-│   ├── __init__.py
-│   ├── base_agent.py          # Base agent with retry logic
-│   ├── planner_agent.py       # Travel planning agent
-│   ├── researcher_agent.py    # Research agent
-│   ├── executor_agent.py     # Execution agent
-│   └── validator_agent.py    # Validation agent
-├── pages/
-│   ├── login.py              # Login page
-│   └── signup.py            # Signup page
-├── orchestrator.py           # LangGraph workflow orchestrator
-├── app.py                    # Main Streamlit application
-├── auth.py                   # Authentication manager
-├── database.py              # SQLite database operations
-├── logger_config.py         # Logging configuration
-├── config.py                # Application configuration
-├── requirements.txt         # Python dependencies
-├── .env.example            # Environment variables template
-├── .gitignore              # Git ignore rules
-├── travel_agent.db         # SQLite database (auto-created)
-└── README.md               # This file
+├── src/
+│   └── travel_agent/          # Main package
+│       ├── __init__.py
+│       ├── agents/            # Agent modules
+│       │   ├── __init__.py
+│       │   ├── base_agent.py          # Base agent with retry logic
+│       │   ├── planner_agent.py       # Travel planning agent
+│       │   ├── researcher_agent.py   # Research agent
+│       │   ├── executor_agent.py      # Execution agent
+│       │   └── validator_agent.py     # Validation agent
+│       ├── core/              # Core modules
+│       │   ├── __init__.py
+│       │   ├── config.py             # Application configuration
+│       │   ├── database.py            # SQLite database operations
+│       │   ├── auth.py                # Authentication manager
+│       │   ├── logger_config.py       # Logging configuration
+│       │   └── orchestrator.py       # LangGraph workflow orchestrator
+│       └── utils/             # Utility modules
+│           ├── __init__.py
+│           └── pdf_generator.py       # PDF generation utility
+├── pages/                     # Streamlit pages (must be at root)
+│   ├── login.py               # Login page
+│   ├── signup.py              # Signup page
+│   ├── about.py               # About page
+│   └── operation_logs.py         # Operation logs page
+├── tests/                      # Test files
+│   └── __init__.py
+├── docs/                       # Documentation
+├── scripts/                    # Utility scripts
+│   └── setup.sh                # Setup script
+├── config/                     # Configuration files
+├── app.py                      # Main Streamlit application (entry point)
+├── requirements.txt            # Python dependencies
+├── setup.py                    # Package setup script
+├── pyproject.toml              # Modern Python project configuration
+├── MANIFEST.in                 # Package manifest
+├── .env.example                # Environment variables template
+├── .gitignore                  # Git ignore rules
+├── travel_agent.db             # SQLite database (auto-created)
+├── README.md                   # This file
+└── QUICKSTART.md               # Quick start guide
 ```
 
 ## Database Schema
@@ -484,6 +518,7 @@ RETRY_BACKOFF_MULTIPLIER = 2
 - **LangChain**: LLM integration framework
 - **Google Gemini**: Large language model (gemini-2.0-flash-lite)
 - **SQLite**: Lightweight database for user data and chat history
+- **ReportLab**: PDF generation library for document creation
 - **Python**: Core programming language
 - **PBKDF2**: Password hashing algorithm for security
 
@@ -502,6 +537,30 @@ RETRY_BACKOFF_MULTIPLIER = 2
 - **Retry Logic**: Automatic handling of transient errors
 - **Exponential Backoff**: Prevents API overload
 - **Efficient State Management**: LangGraph state optimization
+
+## PDF Export Features
+
+- **Professional Formatting**: Clean, well-structured PDF documents with proper typography
+- **Complete Content**: Includes all sections (Plan, Research, Itinerary, Validation, Next Steps)
+- **Typography**: Professional fonts, spacing, and layout for readability
+- **Downloadable**: One-click download from any assistant response dropdown
+- **Print-Ready**: Formatted for printing or sharing
+- **Timestamped**: Each PDF includes generation date and time
+- **Well-Organized**: Clear section headers, proper spacing, and visual hierarchy
+
+## Next Steps Feature
+
+Every travel plan response includes a dedicated **"Next Steps for Improvement"** section that provides:
+
+- **Actionable Guidance**: Specific steps to enhance the plan
+- **Missing Information**: Details that would make the plan more promising
+- **Enhancement Suggestions**: Ways to personalize and improve the itinerary
+- **Research Recommendations**: Additional information to gather
+- **Budget Optimization**: Cost-saving opportunities
+- **Alternative Options**: Backup plans and alternatives
+- **Personalization Tips**: How to customize the plan further
+
+This ensures users always have clear direction on how to refine and improve their travel plans, making each iteration more comprehensive and tailored to their needs.
 
 ## License
 

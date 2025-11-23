@@ -3,7 +3,7 @@ import logging
 import sys
 from datetime import datetime
 from typing import List, Dict, Any
-from config import VERBOSE
+from travel_agent.core.config import VERBOSE
 
 
 class TravelAgentLogger:
@@ -14,15 +14,19 @@ class TravelAgentLogger:
         self.logger = logging.getLogger("TravelAgent")
         self.logger.setLevel(logging.DEBUG if VERBOSE else logging.INFO)
         
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        # Prevent duplicate handlers - only add if no handlers exist
+        if not self.logger.handlers:
+            # Console handler
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setLevel(logging.INFO)
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
+            # Prevent propagation to root logger to avoid duplicate logs
+            self.logger.propagate = False
     
     def log_operation(self, agent: str, operation: str, details: str = "", 
                      status: str = "info", duration: float = None):
@@ -110,6 +114,15 @@ class TravelAgentLogger:
         }
 
 
-# Global logger instance
-logger = TravelAgentLogger()
+# Global logger instance - singleton pattern to prevent duplicate handlers
+_logger_instance = None
 
+def get_logger():
+    """Get or create the global logger instance."""
+    global _logger_instance
+    if _logger_instance is None:
+        _logger_instance = TravelAgentLogger()
+    return _logger_instance
+
+# Create logger instance
+logger = get_logger()

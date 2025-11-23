@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 import time
 import random
 from langchain_google_genai import ChatGoogleGenerativeAI
-from config import (
+from travel_agent.core.config import (
     GEMINI_API_KEY, 
     MODEL_NAME, 
     TEMPERATURE,
@@ -13,7 +13,7 @@ from config import (
     MAX_RETRY_DELAY,
     RETRY_BACKOFF_MULTIPLIER
 )
-from logger_config import logger
+from travel_agent.core.logger_config import logger
 
 
 class BaseAgent(ABC):

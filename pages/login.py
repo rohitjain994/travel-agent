@@ -1,6 +1,12 @@
-"""Login page for travel agent application."""
+"""Login page for Travel Buddy."""
 import streamlit as st
-from auth import AuthManager
+import sys
+from pathlib import Path
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from travel_agent.core import AuthManager
 
 
 def show_login_page():
@@ -15,7 +21,7 @@ def show_login_page():
         return
     
     st.set_page_config(
-        page_title="Login - Travel Agent",
+        page_title="Login - Travel Buddy",
         page_icon="✈️",
         layout="centered"
     )
@@ -36,7 +42,7 @@ def show_login_page():
     
     # Header
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown("# ✈️ Travel Agent")
+    st.markdown("# ✈️ Travel Buddy")
     st.markdown("### Login to your account")
     st.markdown("---")
     

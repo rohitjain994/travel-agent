@@ -1,8 +1,8 @@
 """Planner agent that creates travel plans based on user requirements."""
 from typing import Dict, Any
 import time
-from agents.base_agent import BaseAgent
-from logger_config import logger
+from travel_agent.agents.base_agent import BaseAgent
+from travel_agent.core.logger_config import logger
 
 
 class PlannerAgent(BaseAgent):

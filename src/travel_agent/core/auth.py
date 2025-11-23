@@ -1,5 +1,5 @@
 """Authentication utilities for the travel agent application."""
-from database import Database
+from travel_agent.core.database import Database
 from typing import Optional, Dict, Any
 import streamlit as st
 

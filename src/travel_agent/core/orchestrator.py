@@ -2,8 +2,8 @@
 from typing import Dict, Any, TypedDict
 import time
 from langgraph.graph import StateGraph, END
-from agents import PlannerAgent, ResearcherAgent, ExecutorAgent, ValidatorAgent
-from logger_config import logger
+from travel_agent.agents import PlannerAgent, ResearcherAgent, ExecutorAgent, ValidatorAgent
+from travel_agent.core.logger_config import logger
 
 
 class TravelAgentState(TypedDict):

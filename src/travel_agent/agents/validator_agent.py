@@ -1,8 +1,8 @@
 """Validator agent that validates and refines the travel plan."""
 from typing import Dict, Any
 import time
-from agents.base_agent import BaseAgent
-from logger_config import logger
+from travel_agent.agents.base_agent import BaseAgent
+from travel_agent.core.logger_config import logger
 
 
 class ValidatorAgent(BaseAgent):

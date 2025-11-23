@@ -1,8 +1,8 @@
 """Researcher agent that gathers information about flights, hotels, activities, etc."""
 from typing import Dict, Any, List
 import time
-from agents.base_agent import BaseAgent
-from logger_config import logger
+from travel_agent.agents.base_agent import BaseAgent
+from travel_agent.core.logger_config import logger
 
 
 class ResearcherAgent(BaseAgent):
