@@ -1,0 +1,26 @@
+graph TD
+    subgraph "Agent Execution Pattern"
+        A[Agent Receives State] --> B[Log: Execution Started]
+        B --> C[Prepare Prompt<br/>with Context]
+        C --> D[Call Gemini LLM API]
+        D --> E{Success?}
+        E -->|Yes| F[Process LLM Response]
+        E -->|429/503/500| G[Exponential Backoff<br/>Wait & Retry]
+        G --> H{Retries<br/>Exhausted?}
+        H -->|No| D
+        H -->|Yes| I[Raise RateLimitError]
+        E -->|Other Error| I
+        F --> J[Log: LLM Call<br/>Duration & Size]
+        J --> K[Process Results]
+        K --> L[Log: Execution Completed]
+        L --> M[Return Results to Orchestrator]
+        I --> N[User-Friendly Error Message]
+    end
+    
+    style A fill:#e1f5ff
+    style D fill:#fce4ec
+    style G fill:#fff9c4
+    style M fill:#c8e6c9
+    style I fill:#ffcdd2
+    style N fill:#ffcdd2
+

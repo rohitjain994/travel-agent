@@ -1,0 +1,64 @@
+sequenceDiagram
+    autonumber
+    participant User
+    participant UI as Streamlit UI
+    participant Orch as LangGraph<br/>Orchestrator
+    participant State as State<br/>Management
+    participant Planner as Planner<br/>Agent
+    participant Researcher as Researcher<br/>Agent
+    participant Executor as Executor<br/>Agent
+    participant Validator as Validator<br/>Agent
+    participant LLM as Gemini LLM<br/>API
+    participant Logger as Logger<br/>System
+
+    User->>+UI: Enter Travel Query<br/>(e.g., "Plan trip to Paris")
+    UI->>+Orch: process_query(query, history)
+    Orch->>+State: Initialize State<br/>(user_query, empty fields)
+    Orch->>Logger: 📊 Log: Workflow Started
+    
+    Note over Orch,State: Phase 1: Planning
+    Orch->>+Planner: execute(state)
+    Planner->>Logger: 📝 Log: Planning Started
+    Planner->>+LLM: Generate Travel Plan<br/>(Analyze requirements,<br/>Create itinerary structure)
+    LLM-->>-Planner: Travel Plan +<br/>Research Tasks List
+    Planner->>Logger: ✅ Log: Plan Created<br/>(Duration, Size)
+    Planner-->>-Orch: {plan, research_tasks}
+    Orch->>State: Update State<br/>(plan, research_tasks)
+    Orch->>Logger: 🔄 State Transition:<br/>Planner → Researcher
+    
+    Note over Orch,State: Phase 2: Research
+    Orch->>+Researcher: execute(state)
+    Researcher->>Logger: 📝 Log: Research Started
+    Researcher->>+LLM: Research Travel Options<br/>(Flights, Hotels, Activities,<br/>Restaurants with prices)
+    LLM-->>-Researcher: Research Results<br/>(Options, Prices, Ratings)
+    Researcher->>Logger: ✅ Log: Research Completed<br/>(Results count, Duration)
+    Researcher-->>-Orch: {research_results}
+    Orch->>State: Update State<br/>(research_results)
+    Orch->>Logger: 🔄 State Transition:<br/>Researcher → Executor
+    
+    Note over Orch,State: Phase 3: Execution
+    Orch->>+Executor: execute(state)
+    Executor->>Logger: 📝 Log: Execution Started
+    Executor->>+LLM: Synthesize Final Itinerary<br/>(Combine plan + research,<br/>Add times, booking info)
+    LLM-->>-Executor: Final Itinerary<br/>(Complete, Actionable)
+    Executor->>Logger: ✅ Log: Execution Completed<br/>(Itinerary size, Duration)
+    Executor-->>-Orch: {final_itinerary}
+    Orch->>State: Update State<br/>(final_itinerary)
+    Orch->>Logger: 🔄 State Transition:<br/>Executor → Validator
+    
+    Note over Orch,State: Phase 4: Validation
+    Orch->>+Validator: execute(state)
+    Validator->>Logger: 📝 Log: Validation Started
+    Validator->>+LLM: Validate & Refine Plan<br/>(Check completeness,<br/>Consistency, Feasibility)
+    LLM-->>-Validator: Validation Feedback<br/>(Status, Issues, Suggestions)
+    Validator->>Logger: ✅ Log: Validation Completed<br/>(Feedback length, Duration)
+    Validator-->>-Orch: {validation}
+    Orch->>State: Update State<br/>(validation, status)
+    Orch->>Logger: 🔄 State Transition:<br/>Validator → END
+    
+    Orch->>Logger: ✅ Log: Workflow Completed<br/>(Total duration, Iterations)
+    Orch->>State: Final State<br/>(All fields populated)
+    Orch-->>-UI: Complete Results<br/>(plan, research, itinerary, validation)
+    UI->>Logger: Display Logs in Sidebar
+    UI-->>-User: Display Travel Itinerary<br/>(Expandable sections)
+

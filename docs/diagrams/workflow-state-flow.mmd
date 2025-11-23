@@ -1,0 +1,43 @@
+flowchart TD
+    Start([User Query]) --> Init[Initialize State]
+    Init --> Plan[Planner Agent]
+    
+    Plan --> PlanLLM[Call Gemini LLM<br/>Generate Plan]
+    PlanLLM --> PlanResult[Plan Created<br/>Research Tasks Identified]
+    PlanResult --> UpdateState1[Update State:<br/>plan, research_tasks]
+    
+    UpdateState1 --> Research[Researcher Agent]
+    Research --> ResearchLLM[Call Gemini LLM<br/>Research Options]
+    ResearchLLM --> ResearchResult[Research Results<br/>Flights, Hotels, Activities]
+    ResearchResult --> UpdateState2[Update State:<br/>research_results]
+    
+    UpdateState2 --> Exec[Executor Agent]
+    Exec --> ExecLLM[Call Gemini LLM<br/>Synthesize Itinerary]
+    ExecLLM --> ExecResult[Final Itinerary<br/>Complete & Actionable]
+    ExecResult --> UpdateState3[Update State:<br/>final_itinerary]
+    
+    UpdateState3 --> Valid[Validator Agent]
+    Valid --> ValidLLM[Call Gemini LLM<br/>Validate Plan]
+    ValidLLM --> ValidResult[Validation Feedback<br/>Status & Suggestions]
+    ValidResult --> UpdateState4[Update State:<br/>validation, status]
+    
+    UpdateState4 --> End([Return Results])
+    End --> Display[Display in UI<br/>with Logs]
+    
+    Plan -.->|Log| Logger[Logger System]
+    Research -.->|Log| Logger
+    Exec -.->|Log| Logger
+    Valid -.->|Log| Logger
+    
+    style Start fill:#e1f5ff
+    style Plan fill:#e8f5e9
+    style Research fill:#e8f5e9
+    style Exec fill:#e8f5e9
+    style Valid fill:#e8f5e9
+    style End fill:#c8e6c9
+    style Logger fill:#f3e5f5
+    style PlanLLM fill:#fce4ec
+    style ResearchLLM fill:#fce4ec
+    style ExecLLM fill:#fce4ec
+    style ValidLLM fill:#fce4ec
+

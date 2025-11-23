@@ -24,6 +24,11 @@ The system uses a multi-agent architecture orchestrated by LangGraph, with each 
 
 ### System Architecture Diagram
 
+**Diagram File**: [`docs/diagrams/system-architecture.mmd`](docs/diagrams/system-architecture.mmd)
+
+<details>
+<summary>Click to view System Architecture Diagram</summary>
+
 ```mermaid
 graph TB
     subgraph "User Interface Layer"
@@ -115,193 +120,35 @@ graph TB
     style USER_DB fill:#e3f2fd
     style BASE fill:#f1f8e9
 ```
+</details>
 
 ### Workflow Diagram
 
 #### Detailed Sequence Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User
-    participant UI as Streamlit UI
-    participant Orch as LangGraph<br/>Orchestrator
-    participant State as State<br/>Management
-    participant Planner as Planner<br/>Agent
-    participant Researcher as Researcher<br/>Agent
-    participant Executor as Executor<br/>Agent
-    participant Validator as Validator<br/>Agent
-    participant LLM as Gemini LLM<br/>API
-    participant Logger as Logger<br/>System
+![Workflow Sequence](docs/diagrams/workflow-sequence.mmd)
 
-    User->>+UI: Enter Travel Query<br/>(e.g., "Plan trip to Paris")
-    UI->>+Orch: process_query(query, history)
-    Orch->>+State: Initialize State<br/>(user_query, empty fields)
-    Orch->>Logger: 📊 Log: Workflow Started
-    
-    Note over Orch,State: Phase 1: Planning
-    Orch->>+Planner: execute(state)
-    Planner->>Logger: 📝 Log: Planning Started
-    Planner->>+LLM: Generate Travel Plan<br/>(Analyze requirements,<br/>Create itinerary structure)
-    LLM-->>-Planner: Travel Plan +<br/>Research Tasks List
-    Planner->>Logger: ✅ Log: Plan Created<br/>(Duration, Size)
-    Planner-->>-Orch: {plan, research_tasks}
-    Orch->>State: Update State<br/>(plan, research_tasks)
-    Orch->>Logger: 🔄 State Transition:<br/>Planner → Researcher
-    
-    Note over Orch,State: Phase 2: Research
-    Orch->>+Researcher: execute(state)
-    Researcher->>Logger: 📝 Log: Research Started
-    Researcher->>+LLM: Research Travel Options<br/>(Flights, Hotels, Activities,<br/>Restaurants with prices)
-    LLM-->>-Researcher: Research Results<br/>(Options, Prices, Ratings)
-    Researcher->>Logger: ✅ Log: Research Completed<br/>(Results count, Duration)
-    Researcher-->>-Orch: {research_results}
-    Orch->>State: Update State<br/>(research_results)
-    Orch->>Logger: 🔄 State Transition:<br/>Researcher → Executor
-    
-    Note over Orch,State: Phase 3: Execution
-    Orch->>+Executor: execute(state)
-    Executor->>Logger: 📝 Log: Execution Started
-    Executor->>+LLM: Synthesize Final Itinerary<br/>(Combine plan + research,<br/>Add times, booking info)
-    LLM-->>-Executor: Final Itinerary<br/>(Complete, Actionable)
-    Executor->>Logger: ✅ Log: Execution Completed<br/>(Itinerary size, Duration)
-    Executor-->>-Orch: {final_itinerary}
-    Orch->>State: Update State<br/>(final_itinerary)
-    Orch->>Logger: 🔄 State Transition:<br/>Executor → Validator
-    
-    Note over Orch,State: Phase 4: Validation
-    Orch->>+Validator: execute(state)
-    Validator->>Logger: 📝 Log: Validation Started
-    Validator->>+LLM: Validate & Refine Plan<br/>(Check completeness,<br/>Consistency, Feasibility)
-    LLM-->>-Validator: Validation Feedback<br/>(Status, Issues, Suggestions)
-    Validator->>Logger: ✅ Log: Validation Completed<br/>(Feedback length, Duration)
-    Validator-->>-Orch: {validation}
-    Orch->>State: Update State<br/>(validation, status)
-    Orch->>Logger: 🔄 State Transition:<br/>Validator → END
-    
-    Orch->>Logger: ✅ Log: Workflow Completed<br/>(Total duration, Iterations)
-    Orch->>State: Final State<br/>(All fields populated)
-    Orch-->>-UI: Complete Results<br/>(plan, research, itinerary, validation)
-    UI->>Logger: Display Logs in Sidebar
-    UI-->>-User: Display Travel Itinerary<br/>(Expandable sections)
-```
+See [Workflow Sequence Diagram](docs/diagrams/workflow-sequence.mmd) for the complete diagram.
 
 #### Workflow State Flow
 
-```mermaid
-flowchart TD
-    Start([User Query]) --> Init[Initialize State]
-    Init --> Plan[Planner Agent]
-    
-    Plan --> PlanLLM[Call Gemini LLM<br/>Generate Plan]
-    PlanLLM --> PlanResult[Plan Created<br/>Research Tasks Identified]
-    PlanResult --> UpdateState1[Update State:<br/>plan, research_tasks]
-    
-    UpdateState1 --> Research[Researcher Agent]
-    Research --> ResearchLLM[Call Gemini LLM<br/>Research Options]
-    ResearchLLM --> ResearchResult[Research Results<br/>Flights, Hotels, Activities]
-    ResearchResult --> UpdateState2[Update State:<br/>research_results]
-    
-    UpdateState2 --> Exec[Executor Agent]
-    Exec --> ExecLLM[Call Gemini LLM<br/>Synthesize Itinerary]
-    ExecLLM --> ExecResult[Final Itinerary<br/>Complete & Actionable]
-    ExecResult --> UpdateState3[Update State:<br/>final_itinerary]
-    
-    UpdateState3 --> Valid[Validator Agent]
-    Valid --> ValidLLM[Call Gemini LLM<br/>Validate Plan]
-    ValidLLM --> ValidResult[Validation Feedback<br/>Status & Suggestions]
-    ValidResult --> UpdateState4[Update State:<br/>validation, status]
-    
-    UpdateState4 --> End([Return Results])
-    End --> Display[Display in UI<br/>with Logs]
-    
-    Plan -.->|Log| Logger[Logger System]
-    Research -.->|Log| Logger
-    Exec -.->|Log| Logger
-    Valid -.->|Log| Logger
-    
-    style Start fill:#e1f5ff
-    style Plan fill:#e8f5e9
-    style Research fill:#e8f5e9
-    style Exec fill:#e8f5e9
-    style Valid fill:#e8f5e9
-    style End fill:#c8e6c9
-    style Logger fill:#f3e5f5
-    style PlanLLM fill:#fce4ec
-    style ResearchLLM fill:#fce4ec
-    style ExecLLM fill:#fce4ec
-    style ValidLLM fill:#fce4ec
-```
+![Workflow State Flow](docs/diagrams/workflow-state-flow.mmd)
+
+See [Workflow State Flow Diagram](docs/diagrams/workflow-state-flow.mmd) for the complete diagram.
 
 #### Agent Execution Flow with Error Handling
 
-```mermaid
-graph TD
-    subgraph "Agent Execution Pattern"
-        A[Agent Receives State] --> B[Log: Execution Started]
-        B --> C[Prepare Prompt<br/>with Context]
-        C --> D[Call Gemini LLM API]
-        D --> E{Success?}
-        E -->|Yes| F[Process LLM Response]
-        E -->|429/503/500| G[Exponential Backoff<br/>Wait & Retry]
-        G --> H{Retries<br/>Exhausted?}
-        H -->|No| D
-        H -->|Yes| I[Raise RateLimitError]
-        E -->|Other Error| I
-        F --> J[Log: LLM Call<br/>Duration & Size]
-        J --> K[Process Results]
-        K --> L[Log: Execution Completed]
-        L --> M[Return Results to Orchestrator]
-        I --> N[User-Friendly Error Message]
-    end
-    
-    style A fill:#e1f5ff
-    style D fill:#fce4ec
-    style G fill:#fff9c4
-    style M fill:#c8e6c9
-    style I fill:#ffcdd2
-    style N fill:#ffcdd2
-```
+![Agent Execution Flow](docs/diagrams/agent-execution-flow.mmd)
+
+See [Agent Execution Flow Diagram](docs/diagrams/agent-execution-flow.mmd) for the complete diagram.
 
 #### Authentication & Data Flow
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI as Streamlit UI
-    participant Auth as Auth Manager
-    participant DB as SQLite Database
-    participant Chat as Chat History
+![Authentication & Data Flow](docs/diagrams/authentication-data-flow.mmd)
 
-    User->>UI: Access App
-    UI->>Auth: Check Authentication
-    Auth->>DB: Verify Session
-    
-    alt Not Authenticated
-        UI->>User: Show Login/Signup
-        User->>UI: Enter Credentials
-        UI->>Auth: Login/Signup
-        Auth->>DB: Verify/Create User
-        DB-->>Auth: User Data
-        Auth-->>UI: Set Session
-    end
-    
-    User->>UI: Send Message
-    UI->>Chat: Save Message
-    Chat->>DB: Store in chat_history
-    
-    User->>UI: Request Previous Chats
-    UI->>Chat: Get Conversations
-    Chat->>DB: Query conversations table
-    DB-->>Chat: Top 10 Conversations
-    Chat-->>UI: Display in Sidebar
-    
-    User->>UI: Select Conversation
-    UI->>Chat: Load Messages
-    Chat->>DB: Query chat_history
-    DB-->>Chat: Messages
-    Chat-->>UI: Display Conversation
-```
+See [Authentication & Data Flow Diagram](docs/diagrams/authentication-data-flow.mmd) for the complete diagram.
+
+> **Note**: All diagrams are stored in the [`docs/diagrams/`](docs/diagrams/) directory. See the [diagrams README](docs/diagrams/README.md) for more information on viewing and updating these diagrams.
 
 ### Agent Responsibilities
 

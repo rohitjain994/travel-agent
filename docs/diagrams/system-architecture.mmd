@@ -1,0 +1,90 @@
+graph TB
+    subgraph "User Interface Layer"
+        UI[Streamlit UI<br/>app.py]
+        LOGIN[Login/Signup Pages<br/>pages/login.py, signup.py]
+    end
+    
+    subgraph "Authentication Layer"
+        AUTH[Auth Manager<br/>auth.py]
+        DB_AUTH[(SQLite Database<br/>travel_agent.db)]
+    end
+    
+    subgraph "Orchestration Layer"
+        ORCH[LangGraph Orchestrator<br/>orchestrator.py]
+        STATE[TravelAgentState<br/>State Management]
+    end
+    
+    subgraph "Agent Layer"
+        PLAN[Planner Agent<br/>Creates Travel Plans]
+        RESEARCH[Researcher Agent<br/>Gathers Information]
+        EXEC[Executor Agent<br/>Synthesizes Itinerary]
+        VALID[Validator Agent<br/>Validates Plan]
+    end
+    
+    subgraph "Base Infrastructure"
+        BASE[Base Agent<br/>LLM Integration<br/>Retry Logic]
+        CONFIG[Configuration<br/>config.py]
+    end
+    
+    subgraph "External Services"
+        LLM[Google Gemini LLM<br/>gemini-2.0-flash-lite]
+    end
+    
+    subgraph "Data Persistence"
+        CHAT_DB[(Chat History<br/>Conversations)]
+        USER_DB[(User Data<br/>Authentication)]
+    end
+    
+    subgraph "Logging & Monitoring"
+        LOGGER[Travel Agent Logger<br/>logger_config.py]
+    end
+    
+    UI -->|Requires Auth| AUTH
+    LOGIN -->|Authenticate| AUTH
+    AUTH -->|Store/Verify| DB_AUTH
+    AUTH -->|User Session| UI
+    
+    UI -->|User Query| ORCH
+    ORCH -->|State| STATE
+    ORCH -->|Execute| PLAN
+    ORCH -->|Execute| RESEARCH
+    ORCH -->|Execute| EXEC
+    ORCH -->|Execute| VALID
+    
+    PLAN -->|Inherits| BASE
+    RESEARCH -->|Inherits| BASE
+    EXEC -->|Inherits| BASE
+    VALID -->|Inherits| BASE
+    
+    BASE -->|API Calls<br/>with Retry| LLM
+    BASE -->|Uses| CONFIG
+    
+    UI -->|Save Messages| CHAT_DB
+    UI -->|Load History| CHAT_DB
+    AUTH -->|User Data| USER_DB
+    
+    PLAN -->|Logs| LOGGER
+    RESEARCH -->|Logs| LOGGER
+    EXEC -->|Logs| LOGGER
+    VALID -->|Logs| LOGGER
+    ORCH -->|Logs| LOGGER
+    BASE -->|Logs Retries| LOGGER
+    
+    ORCH -->|Results| UI
+    LOGGER -->|Display Logs| UI
+    
+    style UI fill:#e1f5ff
+    style LOGIN fill:#e1f5ff
+    style AUTH fill:#fff9c4
+    style ORCH fill:#fff4e1
+    style PLAN fill:#e8f5e9
+    style RESEARCH fill:#e8f5e9
+    style EXEC fill:#e8f5e9
+    style VALID fill:#e8f5e9
+    style LLM fill:#fce4ec
+    style LOGGER fill:#f3e5f5
+    style DB_AUTH fill:#e3f2fd
+    style CHAT_DB fill:#e3f2fd
+    style USER_DB fill:#e3f2fd
+    style BASE fill:#f1f8e9
+

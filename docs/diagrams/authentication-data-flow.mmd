@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant User
+    participant UI as Streamlit UI
+    participant Auth as Auth Manager
+    participant DB as SQLite Database
+    participant Chat as Chat History
+
+    User->>UI: Access App
+    UI->>Auth: Check Authentication
+    Auth->>DB: Verify Session
+    
+    alt Not Authenticated
+        UI->>User: Show Login/Signup
+        User->>UI: Enter Credentials
+        UI->>Auth: Login/Signup
+        Auth->>DB: Verify/Create User
+        DB-->>Auth: User Data
+        Auth-->>UI: Set Session
+    end
+    
+    User->>UI: Send Message
+    UI->>Chat: Save Message
+    Chat->>DB: Store in chat_history
+    
+    User->>UI: Request Previous Chats
+    UI->>Chat: Get Conversations
+    Chat->>DB: Query conversations table
+    DB-->>Chat: Top 10 Conversations
+    Chat-->>UI: Display in Sidebar
+    
+    User->>UI: Select Conversation
+    UI->>Chat: Load Messages
+    Chat->>DB: Query chat_history
+    DB-->>Chat: Messages
+    Chat-->>UI: Display Conversation
+
